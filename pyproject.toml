@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dials-rest"
+description = "A REST API to a subset of DIALS features"
+readme = "README.md"
+version = "0.0.1"
+license = "MIT"
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "fastapi",
+    "ispyb",
+    'importlib-metadata; python_version<"3.8"',
+    "uvicorn[standard]",
+]
+
