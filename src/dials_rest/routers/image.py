@@ -5,12 +5,15 @@ from pathlib import Path
 import pydantic
 from dials.command_line import export_bitmaps
 from dxtbx.model.experiment_list import ExperimentListFactory
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse
+
+from ..auth import JWTBearer
 
 router = APIRouter(
     prefix="/export_bitmap",
     tags=["image"],
+    dependencies=[Depends(JWTBearer())],
     responses={404: {"description": "Not found"}},
 )
 
