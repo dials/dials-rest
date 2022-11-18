@@ -18,7 +18,5 @@ def run():
     )
 
     args = parser.parse_args()
-    print(args.expiry)
-
     token = create_access_token({}, expires=args.expiry)
     print(token)
