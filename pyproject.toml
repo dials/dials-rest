@@ -12,8 +12,13 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
+    "python-dateutil",
     "fastapi",
     "ispyb",
     'importlib-metadata; python_version<"3.8"',
+    "python-jose",
     "uvicorn[standard]",
 ]
+
+[project.scripts]
+create-access-token = "dials_rest.cli.create_access_token:run"
