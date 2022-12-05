@@ -1,0 +1,13 @@
+name: dials
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.8
+  - dials
+  - python-dateutil
+  - fastapi
+  - ispyb
+  - python-jose
+  - uvicorn[standard]

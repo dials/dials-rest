@@ -36,3 +36,18 @@ curl -X 'GET'   'http://127.0.0.1:8000/export_bitmap/'   -H 'accept: application
   "brightness": 10
 }' > image.png
 ```
+
+To build with docker/podman:
+```
+$ podman build -t dials-rest --format=docker .
+```
+
+To create an access token:
+```
+$ podman run -e JWT_SECRET=$JWT_SECRET -p 127.0.0.1:8081:80 -it dials-rest /env/bin/create-access-token
+```
+
+To run the server:
+```
+$ podman run -e JWT_SECRET=$JWT_SECRET -p 127.0.0.1:8081:80 -it dials-rest /env/bin/create-access-token
+```
