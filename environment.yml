@@ -1,13 +1,13 @@
-name: dials
+name: dials-rest
 channels:
-  - anaconda
   - conda-forge
+  - anaconda
   - defaults
 dependencies:
-  - python>=3.8
   - dials
-  - python-dateutil
   - fastapi
   - ispyb
+  - python=3.10
+  - python-dateutil
   - python-jose
   - uvicorn[standard]
