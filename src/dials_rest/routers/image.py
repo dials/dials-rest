@@ -52,7 +52,7 @@ class ExportBitmapParams(pydantic.BaseModel):
     brightness: pydantic.NonNegativeFloat = 10
 
 
-@router.get("/")
+@router.post("/")
 async def image_as_bitmap(params: ExportBitmapParams):
     expts = ExperimentListFactory.from_filenames([params.filename])
     imageset = expts.imagesets()[0]
