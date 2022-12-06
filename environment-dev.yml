@@ -1,0 +1,15 @@
+name: dials-rest-dev
+channels:
+  - conda-forge
+  - anaconda
+  - defaults
+dependencies:
+  - dials
+  - dials-data
+  - fastapi
+  - httpx
+  - pytest
+  - python=3.10
+  - python-dateutil
+  - python-jose
+  - uvicorn[standard]
