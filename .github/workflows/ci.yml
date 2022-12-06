@@ -3,7 +3,7 @@ name: Python package
 on: [push]
 
 env:
-  DIALS_DATA: ${{ github.workspace }}/dials_data
+  DIALS_DATA: ~/dials_data
 
 jobs:
   build:
