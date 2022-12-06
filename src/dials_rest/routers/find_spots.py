@@ -61,7 +61,7 @@ class PerImageAnalysisResults(pydantic.BaseModel):
     noisiness_method_2: Optional[float] = None
 
 
-@router.get("/")
+@router.post("/")
 async def find_spots(params: PerImageAnalysisParameters) -> PerImageAnalysisResults:
     experiments = ExperimentListFactory.from_filenames([params.filename])
     if params.scan_range and len(experiments) > 1:
