@@ -1,0 +1,30 @@
+name: Python package
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu", "macos", "windows"]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          environment-file: environment-dev.yml
+          miniforge-variant: Mambaforge
+          use-mamba: true
+      - shell: bash -el {0}
+        run: |
+          conda info
+          conda list
+      - name: Install dials-rest
+        shell: bash -el {0}
+        run: |
+          pip install -e .
+      - name: Run pytest
+        shell: bash -el {0}
+        run: |
+            pytest -vs --regression
