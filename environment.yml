@@ -6,7 +6,6 @@ channels:
 dependencies:
   - dials
   - fastapi
-  - ispyb
   - python=3.10
   - python-dateutil
   - python-jose

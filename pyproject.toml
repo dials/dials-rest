@@ -14,7 +14,6 @@ classifiers = [
 dependencies = [
     "python-dateutil",
     "fastapi",
-    "ispyb",
     'importlib-metadata; python_version<"3.8"',
     "python-jose",
     "uvicorn[standard]",
