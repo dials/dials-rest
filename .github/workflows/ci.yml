@@ -2,6 +2,9 @@ name: Python package
 
 on: [push]
 
+env:
+  DIALS_DATA: ${{ github.workspace }}/dials_data
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}-latest
@@ -20,10 +23,40 @@ jobs:
         run: |
           conda info
           conda list
+
       - name: Install dials-rest
         shell: bash -el {0}
         run: |
           pip install -e .
+          echo "$(which python)"
+          echo "$(python -c 'import dials_data; print(dials_data.__version__)')"
+
+      - name: Get dials-data version
+        id: dials-data
+        shell: bash -el {0}
+        run: |
+          echo "$(which python)"
+          echo "version=$(python -c 'import dials_data; print(dials_data.__version__)')" >> $GITHUB_OUTPUT
+
+      - name: Cache dials-data files
+        id: cache-dials-data
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-dials-data
+        with:
+          path: ${{ env.DIALS_DATA }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ steps.dials-data.outputs.version }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - if: ${{ steps.cache-dials-data.outputs.cache-hit != 'true' }}
+        name: List the state of dials.data
+        continue-on-error: true
+        shell: bash -el {0}
+        run: dials.data list
+
       - name: Run pytest
         shell: bash -el {0}
         run: |
