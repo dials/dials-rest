@@ -14,11 +14,27 @@ jobs:
         os: ["ubuntu", "macos", "windows"]
     steps:
       - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
+
+      - name: Cache conda
+        uses: actions/cache@v3
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('environment-dev.yml') }}
+
+      - name: Setup miniconda
+        uses: conda-incubator/setup-miniconda@v2
         with:
           environment-file: environment-dev.yml
           miniforge-variant: Mambaforge
           use-mamba: true
+          channel-priority: strict
+          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+
       - shell: bash -el {0}
         run: |
           conda info
