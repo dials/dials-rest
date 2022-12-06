@@ -1,0 +1,94 @@
+name: Python package
+
+on: [push]
+
+env:
+  DIALS_DATA: ${{ github.workspace }}/dials_data
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu", "macos", "windows"]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Mambaforge
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          activate-environment: anaconda-client-env
+          use-mamba: true
+          channel-priority: strict
+          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+
+      - name: Get Date
+        id: get-date
+        run: echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Cache Conda env
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.CONDA }}/envs
+          key:
+            conda-${{ runner.os }}-${{ runner.arch }}-${{
+            steps.get-date.outputs.today }}-${{
+            hashFiles('environment-dev.yml') }}-${{
+            env.CACHE_NUMBER }}
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 0
+        id: cache
+
+      - name: Update environment
+        run:
+          mamba env update -n anaconda-client-env -f
+          environment-dev.yml
+        if: steps.cache.outputs.cache-hit != 'true'
+
+      - shell: bash -el {0}
+        run: |
+          conda info
+          conda list
+
+      - name: Install dials-rest
+        shell: bash -el {0}
+        run: |
+          pip install -e .
+          echo "$(which python)"
+          echo "$(python -c 'import dials_data; print(dials_data.__version__)')"
+
+      - name: Get dials-data version
+        id: dials-data
+        shell: bash -el {0}
+        run: |
+          echo "$(which python)"
+          echo "version=$(python -c 'import dials_data; print(dials_data.__version__)')" >> $GITHUB_OUTPUT
+
+      - name: Cache dials-data files
+        id: cache-dials-data
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-dials-data
+        with:
+          path: ${{ env.DIALS_DATA }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ steps.dials-data.outputs.version }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - if: ${{ steps.cache-dials-data.outputs.cache-hit != 'true' }}
+        name: List the state of dials.data
+        continue-on-error: true
+        shell: bash -el {0}
+        run: dials.data list
+
+      - name: Run pytest
+        shell: bash -el {0}
+        run: |
+            pytest -vs --regression
