@@ -41,6 +41,7 @@ jobs:
         uses: docker/metadata-action@v4.3.0
         with:
           images: |
+            ${{ github.repository }}
             ghcr.io/${{ github.repository }}
           tags: |
             type=edge,branch=main
