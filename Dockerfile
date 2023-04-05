@@ -11,4 +11,4 @@ FROM gcr.io/distroless/base-debian11
 
 COPY --from=conda /env /env
 
-CMD ["/env/bin/uvicorn", "--host", "0.0.0.0", "--port", "80", "dials_rest.main:app"]
+CMD ["/env/bin/uvicorn", "--host", "0.0.0.0", "--port", "8080", "dials_rest.main:app"]
