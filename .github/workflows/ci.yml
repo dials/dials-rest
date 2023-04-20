@@ -45,6 +45,11 @@ jobs:
           CACHE_NUMBER: 1
         id: cache
 
+      - shell: bash -el {0}
+        run: |
+          mamba info
+          mamba list
+
       - name: Update environment
         run:
           mamba env update -n dials-rest-env -f
