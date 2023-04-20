@@ -52,7 +52,7 @@ jobs:
 
       - name: Update environment
         run:
-          mamba env update -n dials-rest-env -f
+          mamba env update -n dials-rest-env -v -f
           environment-dev.yml
         if: steps.cache.outputs.cache-hit != 'true'
 
