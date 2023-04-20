@@ -1,10 +1,10 @@
-name: dials-rest
+name: foo
 channels:
   - conda-forge
   - anaconda
   - defaults
 dependencies:
-  - dials>=3.14
+  - dials>=3.13
   - fastapi
   - python=3.10
   - python-dateutil
