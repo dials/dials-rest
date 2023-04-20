@@ -4,7 +4,7 @@ channels:
   - anaconda
   - defaults
 dependencies:
-  - dials>=3.13
+  - dials>=3.14
   - dials-data
   - fastapi
   - httpx
