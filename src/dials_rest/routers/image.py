@@ -42,6 +42,12 @@ class DisplayEnum(str, Enum):
     global_threshold = "global_threshold"
 
 
+class ResolutionRingsParams(pydantic.BaseModel):
+    show: bool = False
+    number: pydantic.PositiveInt = 5
+    fontsize: pydantic.PositiveInt = 30
+
+
 class ExportBitmapParams(pydantic.BaseModel):
     filename: Path
     image_index: pydantic.PositiveInt | None = 1
@@ -50,6 +56,7 @@ class ExportBitmapParams(pydantic.BaseModel):
     display: DisplayEnum = DisplayEnum.image
     colour_scheme: ColourSchemes = ColourSchemes.greyscale
     brightness: pydantic.NonNegativeFloat = 10
+    resolution_rings: ResolutionRingsParams = ResolutionRingsParams()
 
 
 @router.post("/")
@@ -72,6 +79,9 @@ async def image_as_bitmap(params: ExportBitmapParams):
     phil_params.output.directory = "/tmp"
     phil_params.output.prefix = str(time.time())
     phil_params.imageset_index = 0
+    phil_params.resolution_rings.show = params.resolution_rings.show
+    phil_params.resolution_rings.number = params.resolution_rings.number
+    phil_params.resolution_rings.fontsize = params.resolution_rings.fontsize
 
     filenames = export_bitmaps.imageset_as_bitmaps(image, phil_params)
 
