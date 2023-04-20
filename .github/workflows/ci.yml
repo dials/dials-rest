@@ -18,12 +18,13 @@ jobs:
       - name: Setup Mambaforge
         uses: conda-incubator/setup-miniconda@v2
         with:
-          miniforge-variant: Mambaforge
+          # miniforge-variant: Mambaforge
           miniforge-version: latest
           activate-environment: dials-rest-env
-          use-mamba: true
+          # use-mamba: true
           channels: conda-forge,anaconda,default
           channel-priority: strict
+          show-channel-urls: true
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
       - name: Get Date
@@ -47,12 +48,12 @@ jobs:
 
       - shell: bash -el {0}
         run: |
-          mamba info
-          mamba list
+          conda info
+          conda list
 
       - name: Update environment
         run:
-          mamba env update -n dials-rest-env -v -f
+          conda env update -n dials-rest-env -v -f
           environment-dev.yml
         if: steps.cache.outputs.cache-hit != 'true'
 
