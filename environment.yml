@@ -4,7 +4,7 @@ channels:
   - anaconda
   - defaults
 dependencies:
-  - dials>=3.14
+  - dials
   - fastapi
   - python=3.10
   - python-dateutil
