@@ -20,6 +20,9 @@ def test_export_bitmap_cbf(client, authentication_headers, dials_data):
         "display": "image",
         "colour_scheme": "greyscale",
         "brightness": 10,
+        "resolution_rings": {
+            "show": True,
+        },
     }
     response = client.post("export_bitmap", json=data, headers=authentication_headers)
     assert response.status_code == 200

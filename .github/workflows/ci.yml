@@ -20,10 +20,10 @@ jobs:
         with:
           miniforge-variant: Mambaforge
           miniforge-version: latest
-          activate-environment: anaconda-client-env
+          activate-environment: dials-rest-env
           use-mamba: true
+          channels: conda-forge,anaconda,default
           channel-priority: strict
-          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
       - name: Get Date
         id: get-date
@@ -46,7 +46,7 @@ jobs:
 
       - name: Update environment
         run:
-          mamba env update -n anaconda-client-env -f
+          mamba env update -n dials-rest-env -f
           environment-dev.yml
         if: steps.cache.outputs.cache-hit != 'true'
 
