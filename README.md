@@ -44,10 +44,10 @@ $ podman build -t dials-rest --format=docker .
 
 To create an access token:
 ```
-$ podman run -e JWT_SECRET=$JWT_SECRET -p 127.0.0.1:8081:80 -it dials-rest /env/bin/create-access-token
+$ podman run -e JWT_SECRET=$JWT_SECRET -it dials-rest /env/bin/create-access-token
 ```
 
 To run the server:
 ```
-$ podman run -e JWT_SECRET=$JWT_SECRET -p 127.0.0.1:8081:80 -it dials-rest /env/bin/create-access-token
+$ podman run -e JWT_SECRET=$JWT_SECRET -p 127.0.0.1:8081:80 dials-rest
 ```
