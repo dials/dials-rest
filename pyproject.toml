@@ -6,7 +6,6 @@ requires = ["setuptools>=61", "setuptools-scm"]
 name = "dials-rest"
 description = "A REST API to a subset of DIALS features"
 readme = "README.md"
-version = "0.0.1"
 license = {text = "MIT"}
 classifiers = [
     "Programming Language :: Python :: 3",
