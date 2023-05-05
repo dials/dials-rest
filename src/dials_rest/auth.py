@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from pydantic import BaseModel
 
 from .settings import Settings
 
@@ -14,11 +13,6 @@ logger = logging.getLogger(__name__)
 SECRET_KEY = Settings().jwt_secret
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
 
 
 def create_access_token(
