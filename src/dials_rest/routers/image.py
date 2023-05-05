@@ -1,3 +1,4 @@
+import logging
 import time
 from enum import Enum
 from pathlib import Path
@@ -9,6 +10,8 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse
 
 from ..auth import JWTBearer
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/export_bitmap",
@@ -83,6 +86,7 @@ async def image_as_bitmap(params: ExportBitmapParams):
     phil_params.resolution_rings.number = params.resolution_rings.number
     phil_params.resolution_rings.fontsize = params.resolution_rings.fontsize
 
+    logger.info(f"Exporting bitmap with parameters:\n{params!r}")
     filenames = export_bitmaps.imageset_as_bitmaps(image, phil_params)
 
     return FileResponse(filenames[0])
