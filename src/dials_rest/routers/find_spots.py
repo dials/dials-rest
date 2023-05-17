@@ -63,7 +63,10 @@ class PerImageAnalysisResults(pydantic.BaseModel):
 
 @router.post("/")
 async def find_spots(params: PerImageAnalysisParameters) -> PerImageAnalysisResults:
-    experiments = ExperimentListFactory.from_filenames([params.filename])
+    if "#" in params.filename.stem:
+        experiments = ExperimentListFactory.from_templates([params.filename])
+    else:
+        experiments = ExperimentListFactory.from_filenames([params.filename])
     if params.scan_range and len(experiments) > 1:
         # This means we've imported a sequence of still image: select
         # only the experiment, i.e. image, we're interested in
