@@ -64,7 +64,10 @@ class ExportBitmapParams(pydantic.BaseModel):
 
 @router.post("/")
 async def image_as_bitmap(params: ExportBitmapParams):
-    expts = ExperimentListFactory.from_filenames([params.filename])
+    if "#" in params.filename.stem:
+        expts = ExperimentListFactory.from_templates([params.filename])
+    else:
+        expts = ExperimentListFactory.from_filenames([params.filename])
     imageset = expts.imagesets()[0]
 
     if params.filename.suffix in {".h5", ".nxs"}:

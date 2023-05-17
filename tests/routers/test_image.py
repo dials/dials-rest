@@ -1,6 +1,7 @@
 import os
 from io import BytesIO
 
+import pytest
 from PIL import Image
 
 
@@ -9,10 +10,11 @@ def test_export_bitmap_without_jwt_responds_403(client):
     assert response.status_code == 403
 
 
-def test_export_bitmap_cbf(client, authentication_headers, dials_data):
+@pytest.mark.parametrize("filename", ["centroid_0001.cbf", "centroid_####.cbf"])
+def test_export_bitmap_cbf(filename, client, authentication_headers, dials_data):
     data = {
         "filename": os.fspath(
-            dials_data("centroid_test_data", pathlib=True) / "centroid_0001.cbf"
+            dials_data("centroid_test_data", pathlib=True) / filename
         ),
         "image_index": 1,
         "format": "png",

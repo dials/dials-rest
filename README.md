@@ -24,17 +24,22 @@ Start the app:
 $ uvicorn dials_rest.main:app --reload
 ```
 
+<!-- curl -X 'POST' 'http://127.0.0.1:8001/export_bitmap/' -H 'accept: application/json' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODU1Nzc2MDB9.i6ipplAzjhfBDAZFRsw3UTXYWbQnzZ02YDUSnpvz4j0' -H 'Content-Type: application/json' -d '{ -->
 In another terminal:
 ```
-curl -X 'GET'   'http://127.0.0.1:8000/export_bitmap/'   -H 'accept: application/json'   -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzI0NDQ4MDB9.8J_5yadgK3UrErs1AOXKxjlvkzc-GCNA6Eg-v9obpvU'   -H 'Content-Type: application/json'   -d '{
+curl -X 'POST' 'http://127.0.0.1:8000/export_bitmap/' -H 'accept: application/json' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzI0NDQ4MDB9.8J_5yadgK3UrErs1AOXKxjlvkzc-GCNA6Eg-v9obpvU' -H 'Content-Type: application/json' -d '{
   "filename": "/dls/i24/data/2022/cm31109-5/myoglobin_dithionite/myglobin_3_00001.cbf",
   "image_index": 1,
   "format": "png",
   "binning": 4,
   "display": "image",
   "colour_scheme": "greyscale",
-  "brightness": 10
-}' > image.png
+  "brightness": 10,
+  "resolution_rings": {
+    "show": true,
+    "number": 10
+  }
+}' -o image.png
 ```
 
 To build with docker/podman:

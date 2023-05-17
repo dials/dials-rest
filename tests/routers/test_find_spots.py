@@ -1,12 +1,16 @@
 import os
 from unittest import mock
 
+import pytest
 
-def test_find_spots_cbf(client, authentication_headers, dials_data):
+
+@pytest.mark.parametrize("filename", ["centroid_0001.cbf", "centroid_####.cbf"])
+def test_find_spots_cbf(filename, client, authentication_headers, dials_data):
     data = {
         "filename": os.fspath(
-            dials_data("centroid_test_data", pathlib=True) / "centroid_0001.cbf"
+            dials_data("centroid_test_data", pathlib=True) / filename
         ),
+        "scan_range": (1, 1),
         "d_min": 3.5,
     }
     response = client.post("find_spots", json=data, headers=authentication_headers)
