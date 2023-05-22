@@ -65,16 +65,24 @@ class ExportBitmapParams(pydantic.BaseModel):
 @router.post("/")
 async def image_as_bitmap(params: ExportBitmapParams):
     if "#" in params.filename.stem:
+        # A filename template e.g. image_#####.cbf
         expts = ExperimentListFactory.from_templates([params.filename])
+        imageset = expts[0].imageset[params.image_index - 1 : params.image_index]
+    elif params.filename.suffix in {".h5", ".nxs"}:
+        # A multi-image NeXus file
+        # Use load_models=False workaround to ensure that we only construct a
+        # single experiment object for the specific image we're interested in
+        expt = ExperimentListFactory.from_filenames(
+            [params.filename], load_models=False
+        )[0]
+        expt.load_models(index=params.image_index - 1)
+        imageset = expt.imageset[params.image_index - 1 : params.image_index]
     else:
+        # An individual image file e.g. image_00001.cbf
         expts = ExperimentListFactory.from_filenames([params.filename])
-    imageset = expts.imagesets()[0]
-
-    if params.filename.suffix in {".h5", ".nxs"}:
-        image = imageset[params.image_index - 1 : params.image_index]
-    else:
+        imageset = expts.imagesets()[0]
         b0 = imageset.get_scan().get_batch_offset()
-        image = imageset[b0 : b0 + 1]
+        imageset = imageset[b0 : b0 + 1]
 
     phil_params = export_bitmaps.phil_scope.extract()
     phil_params.format = params.format
@@ -90,6 +98,6 @@ async def image_as_bitmap(params: ExportBitmapParams):
     phil_params.resolution_rings.fontsize = params.resolution_rings.fontsize
 
     logger.info(f"Exporting bitmap with parameters:\n{params!r}")
-    filenames = export_bitmaps.imageset_as_bitmaps(image, phil_params)
+    filenames = export_bitmaps.imageset_as_bitmaps(imageset, phil_params)
 
     return FileResponse(filenames[0])
