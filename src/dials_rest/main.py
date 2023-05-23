@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 
 from .routers import find_spots, image
 from .settings import Settings
@@ -23,6 +24,6 @@ if settings.enable_metrics:
     instrumentator.expose(app)
 
 
-@app.get("/")
-async def root():
-    return {"message": "Welcome to the DIALS REST API!"}
+@app.get("/", include_in_schema=False)
+def get_root():
+    return RedirectResponse("/docs")
