@@ -2,11 +2,12 @@ import logging
 import time
 from enum import Enum
 from pathlib import Path
+from typing import Annotated
 
 import pydantic
 from dials.command_line import export_bitmaps
 from dxtbx.model.experiment_list import ExperimentListFactory
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
 from fastapi.responses import FileResponse
 
 from ..auth import JWTBearer
@@ -62,8 +63,51 @@ class ExportBitmapParams(pydantic.BaseModel):
     resolution_rings: ResolutionRingsParams = ResolutionRingsParams()
 
 
-@router.post("/")
-async def image_as_bitmap(params: ExportBitmapParams):
+image_as_bitmap_examples = {
+    "Single image example": {
+        "description": "Convert a cbf image to a png with binning of pixel to reduce overall image size",
+        "value": {
+            "filename": "/path/to/image_00001.cbf",
+            "binning": 4,
+        },
+    },
+    "Image template example": {
+        "description": "Generate a png for the second image matching the given filename template",
+        "value": {
+            "filename": "/path/to/image_#####.cbf",
+            "image_index": 2,
+            "binning": 4,
+        },
+    },
+    "Multi-image format example": {
+        "description": "Generate a png for the fifth image of a NeXus file, modifying the default colour scheme",
+        "value": {
+            "filename": "/path/to/master.h5",
+            "image_index": 5,
+            "binning": 4,
+            "colour_scheme": "inverse_greyscale",
+        },
+    },
+    "Resolution rings": {
+        "description": "Generate a png with resolution ring overlays",
+        "value": {
+            "filename": "/path/to/image_00001.cbf",
+            "binning": 2,
+            "resolution_rings": {"show": True, "number": 10},
+        },
+    },
+}
+
+
+@router.post(
+    "/",
+    status_code=200,
+    response_class=FileResponse,
+    responses={200: {"description": "Asynchronously streams the file as the response"}},
+)
+async def image_as_bitmap(
+    params: Annotated[ExportBitmapParams, Body(examples=image_as_bitmap_examples)]
+) -> FileResponse:
     if "#" in params.filename.stem:
         # A filename template e.g. image_#####.cbf
         expts = ExperimentListFactory.from_templates([params.filename])
