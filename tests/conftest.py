@@ -16,7 +16,7 @@ def pytest_configure(config):
 
 @pytest.fixture
 def client(monkeypatch):
-    monkeypatch.setenv("JWT_SECRET", JWT_SECRET)
+    monkeypatch.setenv("DIALS_REST_JWT_SECRET", JWT_SECRET)
     from dials_rest.main import app
 
     return TestClient(app)
@@ -24,7 +24,7 @@ def client(monkeypatch):
 
 @pytest.fixture
 def access_token(monkeypatch):
-    monkeypatch.setenv("JWT_SECRET", JWT_SECRET)
+    monkeypatch.setenv("DIALS_REST_JWT_SECRET", JWT_SECRET)
 
     from dials_rest.auth import create_access_token
 
