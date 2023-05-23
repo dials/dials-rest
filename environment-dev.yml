@@ -8,6 +8,7 @@ dependencies:
   - dials-data
   - fastapi
   - httpx
+  - prometheus-fastapi-instrumentator
   - pytest
   - python=3.10
   - python-dateutil

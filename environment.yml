@@ -6,6 +6,7 @@ channels:
 dependencies:
   - dials>=3.14
   - fastapi
+  - prometheus-fastapi-instrumentator
   - python=3.10
   - python-dateutil
   - python-jose
