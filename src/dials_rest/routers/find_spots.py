@@ -2,7 +2,7 @@ import logging
 import time
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Annotated
 
 import pydantic
 from cctbx import uctbx
@@ -11,7 +11,7 @@ from dials.array_family import flex
 from dials.command_line.find_spots import phil_scope as find_spots_phil_scope
 from dials.util import phil
 from dxtbx.model.experiment_list import ExperimentListFactory
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
 
 from ..auth import JWTBearer
 
@@ -32,11 +32,11 @@ class ThresholdAlgorithm(Enum):
 
 class PerImageAnalysisParameters(pydantic.BaseModel):
     filename: Path
-    d_min: Optional[pydantic.PositiveFloat] = None
-    d_max: Optional[pydantic.PositiveFloat] = 40
+    d_min: pydantic.PositiveFloat | None = None
+    d_max: pydantic.PositiveFloat | None = 40
     threshold_algorithm: ThresholdAlgorithm = ThresholdAlgorithm.DISPERSION
     disable_parallax_correction: bool = True
-    scan_range: Optional[tuple[int, int]] = None
+    scan_range: tuple[int, int] | None = None
     filter_ice: bool = True
     ice_rings_width: pydantic.NonNegativeFloat = 0.004
 
@@ -54,15 +54,58 @@ class PerImageAnalysisResults(pydantic.BaseModel):
     n_spots_no_ice: pydantic.NonNegativeInt
     n_spots_total: pydantic.NonNegativeInt
     total_intensity: pydantic.NonNegativeFloat
-    d_min_distl_method_1: Optional[float] = None
-    d_min_distl_method_2: Optional[float] = None
-    estimated_d_min: Optional[float] = None
-    noisiness_method_1: Optional[float] = None
-    noisiness_method_2: Optional[float] = None
+    d_min_distl_method_1: float | None = None
+    d_min_distl_method_2: float | None = None
+    estimated_d_min: float | None = None
+    noisiness_method_1: float | None = None
+    noisiness_method_2: float | None = None
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "n_spots_4A": 36,
+                "n_spots_no_ice": 44,
+                "n_spots_total": 49,
+                "total_intensity": 56848.0,
+                "d_min_distl_method_1": 4.234420130210043,
+                "d_min_distl_method_2": 4.053322019536269,
+                "estimated_d_min": 3.517157644985513,
+                "noisiness_method_1": 0.15019762845849802,
+                "noisiness_method_2": 0.46842105263157896,
+            }
+        }
+
+
+find_spots_examples = {
+    "Single image example": {
+        "description": "Perform spotfinding on a single image with a high resolution cutoff of 3.5 Å",
+        "value": {
+            "filename": "/path/to/image_00001.cbf",
+            "d_min": 3.5,
+        },
+    },
+    "Image template example": {
+        "description": "Perform spotfinding on the second image matching the given filename template",
+        "value": {
+            "filename": "/path/to/image_#####.cbf",
+            "scan_range": [1, 1],
+        },
+    },
+    "Multi-image format example": {
+        "description": "Perform spotfinding on the fifth image of a NeXus file, filtering out spots at ice ring resolutions",
+        "value": {
+            "filename": "/path/to/master.h5",
+            "scan_range": [4, 4],
+            "filter_ice": True,
+        },
+    },
+}
 
 
 @router.post("/")
-async def find_spots(params: PerImageAnalysisParameters) -> PerImageAnalysisResults:
+async def find_spots(
+    params: Annotated[PerImageAnalysisParameters, Body(examples=find_spots_examples)]
+) -> PerImageAnalysisResults:
     if "#" in params.filename.stem:
         experiments = ExperimentListFactory.from_templates([params.filename])
     else:
