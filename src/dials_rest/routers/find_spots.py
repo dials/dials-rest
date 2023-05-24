@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/find_spots",
-    tags=["find_spots"],
+    tags=["spotfinding"],
     dependencies=[Depends(JWTBearer())],
     responses={404: {"description": "Not found"}},
 )

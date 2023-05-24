@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/export_bitmap",
-    tags=["image"],
+    tags=["images"],
     dependencies=[Depends(JWTBearer())],
     responses={404: {"description": "Not found"}},
 )

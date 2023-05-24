@@ -39,10 +39,24 @@ from .settings import Settings
 
 logging.basicConfig(level=logging.INFO)
 
+
+tags_metadata = [
+    {
+        "name": "images",
+        "description": "Generate bitmaps of diffraction images",
+    },
+    {
+        "name": "spotfinding",
+        "description": "Run spotfinding on a diffraction image and report summary statistics",
+    },
+]
+
+
 settings = Settings()
 app = FastAPI(
     title="DIALS REST API",
     description=__doc__,
+    openapi_tags=tags_metadata,
     version=__version__,
 )
 
