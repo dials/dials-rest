@@ -3,8 +3,6 @@
 ```
 mamba env create -f environment.yml
 mamba activate dials-rest
-mamba install python=3.10 -y
-mamba install dials uvicorn[standard] -y
 pip install -e .
 ```
 
@@ -41,6 +39,7 @@ curl -X 'POST' 'http://127.0.0.1:8000/export_bitmap/' -H 'accept: application/js
 }' -o image.png
 ```
 
+
 ## Docker/podman
 To build with docker/podman:
 ```
@@ -74,4 +73,12 @@ EOF
 Run prometheus via podman (or equivalently docker) exposed on port 9091:
 ```
 $ podman run --network=host -v $PWD/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus --web.listen-address="localhost:9091" --config.file=/etc/prometheus/prometheus.yml
+```
+
+
+## Unit tests
+To run unit tests:
+```
+$ mamba install -y dials-data httpx pytest
+$ pytest --regression
 ```
