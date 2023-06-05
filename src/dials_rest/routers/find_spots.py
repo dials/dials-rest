@@ -11,7 +11,8 @@ from dials.array_family import flex
 from dials.command_line.find_spots import phil_scope as find_spots_phil_scope
 from dials.util import phil
 from dxtbx.model.experiment_list import ExperimentListFactory
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 
 from ..auth import JWTBearer
 
@@ -102,19 +103,34 @@ find_spots_examples = {
 }
 
 
-@router.post("/")
+@router.post(
+    "/",
+    status_code=200,
+    response_class=JSONResponse,
+    responses={
+        200: {"description": "The spotfinding results"},
+        404: {"description": "File not found"},
+    },
+)
 async def find_spots(
     params: Annotated[PerImageAnalysisParameters, Body(examples=find_spots_examples)]
 ) -> PerImageAnalysisResults:
-    if "#" in params.filename.stem:
-        experiments = ExperimentListFactory.from_templates([params.filename])
-    else:
-        experiments = ExperimentListFactory.from_filenames([params.filename])
-    if params.scan_range and len(experiments) > 1:
-        # This means we've imported a sequence of still image: select
-        # only the experiment, i.e. image, we're interested in
-        start, end = params.scan_range
-        experiments = experiments[start - 1 : end]
+    try:
+        if "#" in params.filename.stem:
+            experiments = ExperimentListFactory.from_templates([params.filename])
+        else:
+            experiments = ExperimentListFactory.from_filenames([params.filename])
+        if params.scan_range and len(experiments) > 1:
+            # This means we've imported a sequence of still image: select
+            # only the experiment, i.e. image, we're interested in
+            start, end = params.scan_range
+            experiments = experiments[start - 1 : end]
+    except FileNotFoundError as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"File not found: {params.filename}",
+        )
 
     phil_params = find_spots_phil_scope.fetch(source=phil.parse("")).extract()
     phil_params.spotfinder.scan_range = (params.scan_range,)

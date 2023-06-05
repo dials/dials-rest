@@ -7,7 +7,7 @@ from typing import Annotated
 import pydantic
 from dials.command_line import export_bitmaps
 from dxtbx.model.experiment_list import ExperimentListFactory
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 
 from ..auth import JWTBearer
@@ -103,30 +103,40 @@ image_as_bitmap_examples = {
     "/",
     status_code=200,
     response_class=FileResponse,
-    responses={200: {"description": "Asynchronously streams the file as the response"}},
+    responses={
+        200: {"description": "Asynchronously streams the file as the response"},
+        404: {"description": "File not found"},
+    },
 )
 async def image_as_bitmap(
     params: Annotated[ExportBitmapParams, Body(examples=image_as_bitmap_examples)]
 ) -> FileResponse:
-    if "#" in params.filename.stem:
-        # A filename template e.g. image_#####.cbf
-        expts = ExperimentListFactory.from_templates([params.filename])
-        imageset = expts[0].imageset[params.image_index - 1 : params.image_index]
-    elif params.filename.suffix in {".h5", ".nxs"}:
-        # A multi-image NeXus file
-        # Use load_models=False workaround to ensure that we only construct a
-        # single experiment object for the specific image we're interested in
-        expt = ExperimentListFactory.from_filenames(
-            [params.filename], load_models=False
-        )[0]
-        expt.load_models(index=params.image_index - 1)
-        imageset = expt.imageset[params.image_index - 1 : params.image_index]
-    else:
-        # An individual image file e.g. image_00001.cbf
-        expts = ExperimentListFactory.from_filenames([params.filename])
-        imageset = expts.imagesets()[0]
-        b0 = imageset.get_scan().get_batch_offset()
-        imageset = imageset[b0 : b0 + 1]
+    try:
+        if "#" in params.filename.stem:
+            # A filename template e.g. image_#####.cbf
+            expts = ExperimentListFactory.from_templates([params.filename])
+            imageset = expts[0].imageset[params.image_index - 1 : params.image_index]
+        elif params.filename.suffix in {".h5", ".nxs"}:
+            # A multi-image NeXus file
+            # Use load_models=False workaround to ensure that we only construct a
+            # single experiment object for the specific image we're interested in
+            expt = ExperimentListFactory.from_filenames(
+                [params.filename], load_models=False
+            )[0]
+            expt.load_models(index=params.image_index - 1)
+            imageset = expt.imageset[params.image_index - 1 : params.image_index]
+        else:
+            # An individual image file e.g. image_00001.cbf
+            expts = ExperimentListFactory.from_filenames([params.filename])
+            imageset = expts.imagesets()[0]
+            b0 = imageset.get_scan().get_batch_offset()
+            imageset = imageset[b0 : b0 + 1]
+    except FileNotFoundError as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"File not found: {params.filename}",
+        )
 
     phil_params = export_bitmaps.phil_scope.extract()
     phil_params.format = params.format
