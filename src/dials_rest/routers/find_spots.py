@@ -129,8 +129,16 @@ async def find_spots(
         logger.exception(e)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"File not found: {params.filename}",
+            detail=str(e),
         )
+    except ValueError as e:
+        msg = str(e)
+        if "does not match any files" in msg:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=msg,
+            )
 
     phil_params = find_spots_phil_scope.fetch(source=phil.parse("")).extract()
     phil_params.spotfinder.scan_range = (params.scan_range,)

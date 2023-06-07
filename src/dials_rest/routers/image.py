@@ -135,8 +135,16 @@ async def image_as_bitmap(
         logger.exception(e)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"File not found: {params.filename}",
+            detail=str(e),
         )
+    except ValueError as e:
+        msg = str(e)
+        if "does not match any files" in msg:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=msg,
+            )
 
     phil_params = export_bitmaps.phil_scope.extract()
     phil_params.format = params.format

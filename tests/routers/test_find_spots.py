@@ -10,6 +10,14 @@ def test_find_spots_file_not_found_responds_404(client, authentication_headers):
     assert response.status_code == 404
 
 
+def test_find_spots_template_no_matching_file_responds_404(
+    client, authentication_headers
+):
+    data = {"filename": "/made/up/path_#####.cbf"}
+    response = client.post("find_spots", json=data, headers=authentication_headers)
+    assert response.status_code == 404
+
+
 @pytest.mark.parametrize("filename", ["centroid_0001.cbf", "centroid_####.cbf"])
 def test_find_spots_cbf(filename, client, authentication_headers, dials_data):
     data = {
