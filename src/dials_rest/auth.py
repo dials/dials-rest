@@ -52,7 +52,14 @@ class JWTBearer(HTTPBearer):
         super().__init__(auto_error=auto_error)
 
     async def __call__(self, request: Request) -> UserToken:
-        token: HTTPAuthorizationCredentials = await super().__call__(request)
+        try:
+            token: HTTPAuthorizationCredentials = await super().__call__(request)
+        except HTTPException as exception:
+            # Convert HTTP_403_FORBIDDEN to HTTP_401_UNAUTHORIZED
+            # See https://github.com/tiangolo/fastapi/discussions/9130
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail=exception.detail
+            )
         if token:
             if not token.scheme == "Bearer":
                 raise HTTPException(
