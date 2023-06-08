@@ -6,9 +6,9 @@ from fastapi import status
 from PIL import Image
 
 
-def test_export_bitmap_without_jwt_responds_403(client):
+def test_export_bitmap_without_jwt_responds_401(client):
     response = client.post("export_bitmap")
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 def test_export_bitmap_file_not_found_responds_404(client, authentication_headers):
