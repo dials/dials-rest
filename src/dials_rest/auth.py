@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import logging
 from datetime import datetime, timedelta
 
+import jose.exceptions
+import jose.jwt
+from dateutil.tz import UTC
 from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
 
 from .settings import Settings
 
@@ -24,52 +28,54 @@ def create_access_token(
     elif not expires:
         expires = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expires})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jose.jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
-def decode_access_token(token: str) -> dict:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError:
-        raise credentials_exception
+class UserToken(HTTPAuthorizationCredentials):
+    expiry: datetime
 
-    return data
+    @classmethod
+    def from_jwt(cls, jwt: dict) -> UserToken:
+        return cls(
+            expiry=datetime.fromtimestamp(jwt["exp"], tz=UTC),
+            scheme="bearer",
+            credentials="",
+        )
 
 
 class JWTBearer(HTTPBearer):
+    # https://github.com/tiangolo/fastapi/discussions/9085#discussioncomment-5543403
+    __globals__ = globals()
+
     def __init__(self, auto_error: bool = True):
-        super(JWTBearer, self).__init__(auto_error=auto_error)
+        super().__init__(auto_error=auto_error)
 
-    async def __call__(self, request: Request):
-        credentials: HTTPAuthorizationCredentials = await super(
-            JWTBearer, self
-        ).__call__(request)
-        if credentials:
-            if not credentials.scheme == "Bearer":
+    async def __call__(self, request: Request) -> UserToken:
+        token: HTTPAuthorizationCredentials = await super().__call__(request)
+        if token:
+            if not token.scheme == "Bearer":
                 raise HTTPException(
-                    status_code=403, detail="Invalid authentication scheme."
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid authentication scheme",
                 )
-            if not self.verify_jwt(credentials.credentials):
+            try:
+                data = jose.jwt.decode(
+                    token.credentials, SECRET_KEY, algorithms=[ALGORITHM]
+                )
+            except jose.exceptions.ExpiredSignatureError:
                 raise HTTPException(
-                    status_code=403, detail="Invalid token or expired token."
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Expired token",
                 )
-            return credentials.credentials
+            except jose.exceptions.JWTError:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid authentication token",
+                )
+            return UserToken.from_jwt(data)
         else:
-            raise HTTPException(status_code=403, detail="Invalid authorization code.")
-
-    def verify_jwt(self, jwtoken: str) -> bool:
-        isTokenValid: bool = False
-
-        try:
-            payload = decode_access_token(jwtoken)
-        except Exception:
-            payload = None
-        if payload:
-            isTokenValid = True
-        return isTokenValid
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authorization credentials.",
+            )

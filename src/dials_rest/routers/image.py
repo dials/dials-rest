@@ -54,7 +54,7 @@ class ResolutionRingsParams(pydantic.BaseModel):
 
 class ExportBitmapParams(pydantic.BaseModel):
     filename: Path
-    image_index: pydantic.PositiveInt | None = 1
+    image_index: pydantic.PositiveInt = 1
     format: FormatEnum = FormatEnum.png
     binning: pydantic.PositiveInt = 1
     display: DisplayEnum = DisplayEnum.image
