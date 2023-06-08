@@ -121,7 +121,7 @@ async def find_spots(
         else:
             experiments = ExperimentListFactory.from_filenames([params.filename])
         if params.scan_range and len(experiments) > 1:
-            # This means we've imported a sequence of still image: select
+            # This means we've imported a sequence of still images: select
             # only the experiment, i.e. image, we're interested in
             start, end = params.scan_range
             experiments = experiments[start - 1 : end]
@@ -132,6 +132,7 @@ async def find_spots(
             detail=str(e),
         )
     except ValueError as e:
+        logger.exception(e)
         msg = str(e)
         if "does not match any files" in msg:
             logger.exception(e)
@@ -139,6 +140,21 @@ async def find_spots(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=msg,
             )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=msg,
+        )
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )
+    if not experiments:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Could not find matching image format for {params.filename}",
+        )
 
     phil_params = find_spots_phil_scope.fetch(source=phil.parse("")).extract()
     phil_params.spotfinder.scan_range = (params.scan_range,)

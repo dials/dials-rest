@@ -138,6 +138,7 @@ async def image_as_bitmap(
             detail=str(e),
         )
     except ValueError as e:
+        logger.exception(e)
         msg = str(e)
         if "does not match any files" in msg:
             logger.exception(e)
@@ -145,6 +146,16 @@ async def image_as_bitmap(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=msg,
             )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=msg,
+        )
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )
 
     phil_params = export_bitmaps.phil_scope.extract()
     phil_params.format = params.format
