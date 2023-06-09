@@ -6,7 +6,7 @@ import dateutil.parser
 from ..auth import create_access_token
 
 
-def run():
+def run(args=None):
     parser = argparse.ArgumentParser(
         "Generate an access token for the dials-rest server"
     )
@@ -17,9 +17,18 @@ def run():
         type=dateutil.parser.parse,
     )
 
-    args = parser.parse_args()
-    expires = datetime.datetime(
-        args.expiry.year, args.expiry.month, args.expiry.day, tzinfo=dateutil.tz.UTC
-    )
+    args = parser.parse_args(args=args)
+    if args.expiry:
+        expires = datetime.datetime(
+            args.expiry.year,
+            args.expiry.month,
+            args.expiry.day,
+            args.expiry.hour,
+            args.expiry.minute,
+            args.expiry.second,
+            tzinfo=dateutil.tz.UTC,
+        )
+    else:
+        expires = None
     token = create_access_token({}, expires=expires)
     print(token)

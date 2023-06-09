@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import BaseSettings, Field
+
+# The pydantic secrets-reading dir, for settings secret settings from file
+SECRETS_DIR = Path("/opt/secrets")
 
 
 class Settings(BaseSettings):
@@ -19,4 +23,5 @@ class Settings(BaseSettings):
 
     class Config:
         env_prefix = "DIALS_REST_"
-        secrets_dir = "/opt/secrets"
+        if SECRETS_DIR.is_dir():
+            secrets_dir = SECRETS_DIR
