@@ -8,6 +8,7 @@ from typing import Annotated
 
 import PIL.Image
 import pydantic
+from cctbx import sgtbx, uctbx
 from dials.util import export_bitmaps
 from dxtbx.model.experiment_list import ExperimentListFactory
 from fastapi import APIRouter, Body, Depends, HTTPException, status
@@ -53,6 +54,42 @@ class ResolutionRingsParams(pydantic.BaseModel):
     show: bool = False
     number: pydantic.PositiveInt = 5
     fontsize: pydantic.PositiveInt = 30
+    fill: str = "red"
+
+
+class IceRingsParams(pydantic.BaseModel):
+    show: bool = False
+    fontsize: pydantic.PositiveInt = 30
+    fill: str = "blue"
+    unit_cell: uctbx.unit_cell = export_bitmaps.HEXAGONAL_ICE_UNIT_CELL
+    space_group: sgtbx.space_group = export_bitmaps.HEXAGONAL_ICE_SPACE_GROUP
+
+    @pydantic.validator("unit_cell", pre=True)
+    def check_unit_cell(cls, v):
+        if not v:
+            return None
+        orig_v = v
+        if isinstance(v, str):
+            v = v.replace(",", " ").split()
+        v = [float(v) for v in v]
+        try:
+            v = uctbx.unit_cell(v)
+        except Exception:
+            raise ValueError(f"Invalid unit_cell {orig_v}")
+        return v
+
+    @pydantic.validator("space_group", pre=True)
+    def check_space_group(cls, v):
+        if not v:
+            return None
+        try:
+            v = sgtbx.space_group_info(v).group()
+        except Exception:
+            raise ValueError(f"Invalid space group {v}")
+        return v
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class ExportBitmapParams(pydantic.BaseModel):
@@ -64,6 +101,7 @@ class ExportBitmapParams(pydantic.BaseModel):
     colour_scheme: ColourSchemes = ColourSchemes.greyscale
     brightness: pydantic.NonNegativeFloat = 10
     resolution_rings: ResolutionRingsParams = ResolutionRingsParams()
+    ice_rings: IceRingsParams = IceRingsParams()
 
 
 image_as_bitmap_examples = {
@@ -179,7 +217,19 @@ async def image_as_bitmap(
             pil_img,
             flex_img,
             n_rings=params.resolution_rings.number,
+            fill=params.resolution_rings.fill,
             fontsize=params.resolution_rings.fontsize,
+            binning=params.binning,
+        )
+    if params.ice_rings.show:
+        export_bitmaps.draw_ice_rings(
+            expt.imageset,
+            pil_img,
+            flex_img,
+            unit_cell=params.ice_rings.unit_cell,
+            space_group=params.ice_rings.space_group,
+            fill=params.ice_rings.fill,
+            fontsize=params.ice_rings.fontsize,
             binning=params.binning,
         )
 
