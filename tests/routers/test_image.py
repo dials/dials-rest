@@ -83,6 +83,9 @@ def test_export_bitmap_h5(client, authentication_headers, dials_data):
         "image_index": 10,
         "format": "png",
         "binning": 2,
+        "ice_rings": {
+            "show": True,
+        },
     }
     response = client.post("export_bitmap", json=data, headers=authentication_headers)
     assert response.status_code == 200
