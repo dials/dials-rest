@@ -1,14 +1,17 @@
+from __future__ import annotations
+
+import io
 import logging
-import time
 from enum import Enum
 from pathlib import Path
 from typing import Annotated
 
+import PIL.Image
 import pydantic
-from dials.command_line import export_bitmaps
+from dials.util import export_bitmaps
 from dxtbx.model.experiment_list import ExperimentListFactory
 from fastapi import APIRouter, Body, Depends, HTTPException, status
-from fastapi.responses import FileResponse
+from fastapi.responses import Response
 
 from ..auth import JWTBearer
 
@@ -102,20 +105,22 @@ image_as_bitmap_examples = {
 @router.post(
     "/",
     status_code=200,
-    response_class=FileResponse,
+    response_class=Response,
     responses={
-        200: {"description": "Asynchronously streams the file as the response"},
+        200: {
+            "description": "Returns the image as a byte string",
+            "content": {"image/png": {}},
+        },
         404: {"description": "File not found"},
     },
 )
 async def image_as_bitmap(
     params: Annotated[ExportBitmapParams, Body(examples=image_as_bitmap_examples)]
-) -> FileResponse:
+) -> Response:
     try:
         if "#" in params.filename.stem:
             # A filename template e.g. image_#####.cbf
-            expts = ExperimentListFactory.from_templates([params.filename])
-            imageset = expts[0].imageset[params.image_index - 1 : params.image_index]
+            expt = ExperimentListFactory.from_templates([params.filename])[0]
         elif params.filename.suffix in {".h5", ".nxs"}:
             # A multi-image NeXus file
             # Use load_models=False workaround to ensure that we only construct a
@@ -124,13 +129,9 @@ async def image_as_bitmap(
                 [params.filename], load_models=False
             )[0]
             expt.load_models(index=params.image_index - 1)
-            imageset = expt.imageset[params.image_index - 1 : params.image_index]
         else:
             # An individual image file e.g. image_00001.cbf
-            expts = ExperimentListFactory.from_filenames([params.filename])
-            imageset = expts.imagesets()[0]
-            b0 = imageset.get_scan().get_batch_offset()
-            imageset = imageset[b0 : b0 + 1]
+            expt = ExperimentListFactory.from_filenames([params.filename])[0]
     except FileNotFoundError as e:
         logger.exception(e)
         raise HTTPException(
@@ -157,20 +158,33 @@ async def image_as_bitmap(
             detail=str(e),
         )
 
-    phil_params = export_bitmaps.phil_scope.extract()
-    phil_params.format = params.format
-    phil_params.binning = params.binning
-    phil_params.brightness = params.brightness
-    phil_params.colour_scheme = params.colour_scheme
-    phil_params.display = params.display
-    phil_params.output.directory = "/tmp"
-    phil_params.output.prefix = str(time.time())
-    phil_params.imageset_index = 0
-    phil_params.resolution_rings.show = params.resolution_rings.show
-    phil_params.resolution_rings.number = params.resolution_rings.number
-    phil_params.resolution_rings.fontsize = params.resolution_rings.fontsize
-
     logger.info(f"Exporting bitmap with parameters:\n{params!r}")
-    filenames = export_bitmaps.imageset_as_bitmaps(imageset, phil_params)
+    flex_img = next(
+        export_bitmaps.imageset_as_flex_image(
+            expt.imageset,
+            images=[params.image_index],
+            brightness=params.brightness,
+            binning=params.binning,
+            display=export_bitmaps.Display(params.display),
+            colour_scheme=export_bitmaps.ColourScheme[params.colour_scheme.upper()],
+        )
+    )
+    pil_img = PIL.Image.frombytes(
+        "RGB", (flex_img.ex_size2(), flex_img.ex_size1()), flex_img.as_bytes()
+    )
 
-    return FileResponse(filenames[0])
+    if params.resolution_rings.show:
+        export_bitmaps.draw_resolution_rings(
+            expt.imageset,
+            pil_img,
+            flex_img,
+            n_rings=params.resolution_rings.number,
+            fontsize=params.resolution_rings.fontsize,
+            binning=params.binning,
+        )
+
+    img_bytes = io.BytesIO()
+    pil_img.save(img_bytes, format=params.format.value)
+    return Response(
+        content=img_bytes.getvalue(), media_type=f"image/{params.format.value}"
+    )
