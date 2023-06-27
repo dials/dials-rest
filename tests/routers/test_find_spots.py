@@ -7,7 +7,7 @@ import pytest
 from fastapi import status
 
 
-def test_export_bitmap_params_schema(monkeypatch):
+def test_find_spots_params_schema(monkeypatch):
     monkeypatch.setenv("DIALS_REST_JWT_SECRET", "FooBar")
     from dials_rest.routers import find_spots
 
