@@ -1,8 +1,19 @@
+from __future__ import annotations
+
 import os
 from unittest import mock
 
 import pytest
 from fastapi import status
+
+
+def test_export_bitmap_params_schema(monkeypatch):
+    monkeypatch.setenv("DIALS_REST_JWT_SECRET", "FooBar")
+    from dials_rest.routers import find_spots
+
+    p = find_spots.PerImageAnalysisParameters(filename="/path/to/image.cbf")
+    p.json()
+    p.schema()
 
 
 def test_find_spots_file_not_found_responds_404(client, authentication_headers):

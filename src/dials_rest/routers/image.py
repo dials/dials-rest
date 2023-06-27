@@ -61,8 +61,12 @@ class IceRingsParams(pydantic.BaseModel):
     show: bool = False
     fontsize: pydantic.PositiveInt = 30
     fill: str = "blue"
-    unit_cell: uctbx.unit_cell = export_bitmaps.HEXAGONAL_ICE_UNIT_CELL
-    space_group: sgtbx.space_group = export_bitmaps.HEXAGONAL_ICE_SPACE_GROUP
+    unit_cell: tuple[
+        float, float, float, float, float, float
+    ] = export_bitmaps.HEXAGONAL_ICE_UNIT_CELL.parameters()
+    space_group: int | str = (
+        export_bitmaps.HEXAGONAL_ICE_SPACE_GROUP.type().lookup_symbol()
+    )
 
     @pydantic.validator("unit_cell", pre=True)
     def check_unit_cell(cls, v):
@@ -73,7 +77,7 @@ class IceRingsParams(pydantic.BaseModel):
             v = v.replace(",", " ").split()
         v = [float(v) for v in v]
         try:
-            v = uctbx.unit_cell(v)
+            uctbx.unit_cell(v)
         except Exception:
             raise ValueError(f"Invalid unit_cell {orig_v}")
         return v
@@ -83,13 +87,10 @@ class IceRingsParams(pydantic.BaseModel):
         if not v:
             return None
         try:
-            v = sgtbx.space_group_info(v).group()
+            sgtbx.space_group_info(v)
         except Exception:
             raise ValueError(f"Invalid space group {v}")
         return v
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class ExportBitmapParams(pydantic.BaseModel):
@@ -226,8 +227,8 @@ async def image_as_bitmap(
             expt.imageset,
             pil_img,
             flex_img,
-            unit_cell=params.ice_rings.unit_cell,
-            space_group=params.ice_rings.space_group,
+            unit_cell=uctbx.unit_cell(params.ice_rings.unit_cell),
+            space_group=sgtbx.space_group_info(params.ice_rings.space_group).group(),
             fill=params.ice_rings.fill,
             fontsize=params.ice_rings.fontsize,
             binning=params.binning,

@@ -1,9 +1,20 @@
+from __future__ import annotations
+
 import os
 from io import BytesIO
 
 import pytest
 from fastapi import status
 from PIL import Image
+
+
+def test_export_bitmap_params_schema(monkeypatch):
+    monkeypatch.setenv("DIALS_REST_JWT_SECRET", "FooBar")
+    from dials_rest.routers import image
+
+    p = image.ExportBitmapParams(filename="/path/to/image.cbf")
+    p.json()
+    p.schema()
 
 
 def test_export_bitmap_without_jwt_responds_401(client):
