@@ -156,6 +156,7 @@ image_as_bitmap_examples = {
 async def image_as_bitmap(
     params: Annotated[ExportBitmapParams, Body(examples=image_as_bitmap_examples)]
 ) -> Response:
+    logger.info(f"Exporting bitmap with parameters:\n{params!r}")
     try:
         if "#" in params.filename.stem:
             # A filename template e.g. image_#####.cbf
@@ -197,7 +198,6 @@ async def image_as_bitmap(
             detail=str(e),
         )
 
-    logger.info(f"Exporting bitmap with parameters:\n{params!r}")
     flex_img = next(
         export_bitmaps.imageset_as_flex_image(
             expt.imageset,
